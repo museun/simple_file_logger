@@ -91,7 +91,7 @@ impl FileLogger {
         };
 
         let _ = { write }.write_fmt(format_args!(
-            "[{level: <5}] {timestamp} [{target}] {payload}",
+            "[{level: <5}] {timestamp} [{target}] {payload}\n",
             level = record.level(),
             timestamp = timestamp(),
             target = record.target(),
