@@ -12,7 +12,7 @@ type Result = std::result::Result<(), Box<dyn Error + Send + Sync + 'static>>;
 /// * open and then the file for each write
 pub fn append_transient(path: impl AsRef<Path>) -> Result {
     init(
-        Kind::Transient(path.as_ref().to_path_buf(), true),
+        Kind::Transient(path.as_ref().to_path_buf()),
         log_filter_parse::Filters::from_env(),
     )
 }
@@ -23,8 +23,9 @@ pub fn append_transient(path: impl AsRef<Path>) -> Result {
 /// * truncate the file initially
 /// * open and then the file for each write
 pub fn truncate_transient(path: impl AsRef<Path>) -> Result {
+    let _ = std::fs::remove_file(path.as_ref());
     init(
-        Kind::Transient(path.as_ref().to_path_buf(), false),
+        Kind::Transient(path.as_ref().to_path_buf()),
         log_filter_parse::Filters::from_env(),
     )
 }
@@ -73,11 +74,11 @@ impl FileLogger {
                 file = fi;
                 &mut file
             }
-            Kind::Transient(path, append) => {
+            Kind::Transient(path) => {
                 match std::fs::OpenOptions::new()
                     .write(true)
                     .create(true)
-                    .append(*append)
+                    .append(true)
                     .open(path)
                 {
                     Ok(fi) => {
@@ -122,7 +123,7 @@ impl log::Log for FileLogger {
 
 enum Kind {
     KeepOpen(std::fs::File),
-    Transient(std::path::PathBuf, bool),
+    Transient(std::path::PathBuf),
 }
 
 fn timestamp() -> u64 {
