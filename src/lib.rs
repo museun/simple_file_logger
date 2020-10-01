@@ -3,12 +3,14 @@ use std::io::Write;
 use std::error::Error;
 use std::path::Path;
 
+type Result = std::result::Result<(), Box<dyn Error + Send + Sync + 'static>>;
+
 /// Create the file logger at this path.
 ///
 /// This will:
 /// * append to the file
 /// * open and then the file for each write
-pub fn append_transient(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
+pub fn append_transient(path: impl AsRef<Path>) -> Result {
     init(
         Kind::Transient(path.as_ref().to_path_buf(), true),
         log_filter_parse::Filters::from_env(),
@@ -20,7 +22,7 @@ pub fn append_transient(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
 /// This will:
 /// * truncate the file initially
 /// * open and then the file for each write
-pub fn truncate_transient(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
+pub fn truncate_transient(path: impl AsRef<Path>) -> Result {
     init(
         Kind::Transient(path.as_ref().to_path_buf(), false),
         log_filter_parse::Filters::from_env(),
@@ -32,7 +34,7 @@ pub fn truncate_transient(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> 
 /// This will:
 /// * append to the file
 /// * keep the file open ('locked') until the process exists.
-pub fn append(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
+pub fn append(path: impl AsRef<Path>) -> Result {
     init(
         Kind::KeepOpen(std::fs::File::open(path)?),
         log_filter_parse::Filters::from_env(),
@@ -44,14 +46,14 @@ pub fn append(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
 /// This will:
 /// * truncate the file initially
 /// * keep the file open ('locked') until the process exists.
-pub fn truncate(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
+pub fn truncate(path: impl AsRef<Path>) -> Result {
     init(
         Kind::KeepOpen(std::fs::File::open(path)?),
         log_filter_parse::Filters::from_env(),
     )
 }
 
-fn init(kind: Kind, filters: log_filter_parse::Filters) -> Result<(), Box<dyn Error>> {
+fn init(kind: Kind, filters: log_filter_parse::Filters) -> Result {
     log::set_max_level(log::LevelFilter::Trace);
     log::set_boxed_logger(Box::new(FileLogger { kind, filters }))?;
     Ok(())
